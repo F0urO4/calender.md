@@ -1,6 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
 @tailwind base;
@@ -13,12 +11,16 @@
 
 body {
   margin: 0;
-  font-family: "Space Grotesk", system-ui, sans-serif;
-  background-color: #020617;
 }
 
 #root {
   min-height: 100vh;
+}
+
+.fit-screen {
+  transform: scale(0.9);
+  transform-origin: top center;
+  height: calc(100vh / 0.9);
 }
 
 @layer base {
@@ -94,7 +96,7 @@ body {
     --sidebar-ring: oklch(0.556 0 0);
   }
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-none;
   }
   body {
     @apply bg-background text-foreground;
