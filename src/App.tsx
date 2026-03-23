@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import html2canvas from 'html2canvas'
+import { jsPDF } from 'jspdf'
 import { UploadCloud, Save, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -33,6 +35,7 @@ export default function App() {
   const [error, setError] = useState<string>('')
   const [compactView, setCompactView] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const exportRef = useRef<HTMLDivElement | null>(null)
 
   const days = useMemo(() => {
     if (!schedule) {
@@ -140,8 +143,42 @@ export default function App() {
     input.value = formatTime12(parsed)
   }
 
-  const handleExportPdf = () => {
-    window.print()
+  const handleExportPdf = async () => {
+    const node = exportRef.current
+    if (!node) return
+
+    const canvas = await html2canvas(node, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+    })
+
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'pt',
+      format: 'letter',
+    })
+
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const margin = 18
+    const pxToPt = 72 / 96
+    const imgWidthPt = canvas.width * pxToPt
+    const imgHeightPt = canvas.height * pxToPt
+    const scale = Math.min(
+      (pageWidth - margin * 2) / imgWidthPt,
+      (pageHeight - margin * 2) / imgHeightPt
+    )
+
+    const renderWidth = imgWidthPt * scale
+    const renderHeight = imgHeightPt * scale
+
+    const x = (pageWidth - renderWidth) / 2
+    const y = margin
+
+    const imgData = canvas.toDataURL('image/png')
+    pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight)
+    pdf.save(`week-${selectedWeek || 'schedule'}.pdf`)
   }
 
 
@@ -182,6 +219,7 @@ export default function App() {
       setError('Unable to reach the API server.')
     })
   }, [])
+
 
   useEffect(() => {
     document
@@ -396,33 +434,33 @@ export default function App() {
               </section>
             </main>
           </div>
-          <section className="print-only print-root">
-            <div className="print-grid">
-              <div className="print-header">
+          <section ref={exportRef} className="export-root">
+            <div className="export-grid">
+              <div className="export-header">
                 <div>
-                  <p className="print-label">Calendar MD</p>
-                  <h2 className="print-title">Weekly schedule</h2>
+                  <p className="export-label">Calendar MD</p>
+                  <h2 className="export-title">Weekly schedule</h2>
                 </div>
-                <div className="print-week">Week {selectedWeek || 'Unloaded'}</div>
+                <div className="export-week">Week {selectedWeek || 'Unloaded'}</div>
               </div>
-              <div className="print-days">
+              <div className="export-days">
                 {days.map((day, index) => (
-                  <div key={`${day.date}-${index}-print`} className="print-day">
-                    <div className="print-day-header">
-                      <span className="print-day-name">{dayLabels[index]}</span>
-                      <span className="print-day-date">{day.date}</span>
+                  <div key={`${day.date}-${index}-export`} className="export-day">
+                    <div className="export-day-header">
+                      <span className="export-day-name">{dayLabels[index]}</span>
+                      <span className="export-day-date">{day.date}</span>
                     </div>
                     {day.events.length === 0 && (
-                      <div className="print-empty">No events</div>
+                      <div className="export-empty">No events</div>
                     )}
                     {day.events.map((event, eventIndex) => (
-                      <div key={`${day.date}-${eventIndex}-print`} className="print-event">
-                        <div className="print-time">
+                      <div key={`${day.date}-${eventIndex}-export`} className="export-event">
+                        <div className="export-time">
                           {formatTime12(event.start)} — {formatTime12(event.end)}
                         </div>
-                        <div className="print-title-text">{event.title}</div>
+                        <div className="export-title-text">{event.title}</div>
                         {event.note && (
-                          <div className="print-note">{event.note}</div>
+                          <div className="export-note">{event.note}</div>
                         )}
                       </div>
                     ))}
