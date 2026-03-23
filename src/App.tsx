@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { UploadCloud, Save, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
@@ -15,6 +14,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { fetchWeek, listWeeks, saveWeek, uploadWeek } from '@/lib/api'
 import type { DaySchedule, EventItem, Schedule } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { formatTime12, parseTimeTo24 } from '@/lib/time'
 
 const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -117,6 +117,24 @@ export default function App() {
       return { ...prev, days: updatedDays }
     })
   }
+
+  const handleTimeBlur = (
+    dayIndex: number,
+    eventIndex: number,
+    field: 'start' | 'end',
+    rawValue: string,
+    fallback: string,
+    input: HTMLInputElement
+  ) => {
+    const parsed = parseTimeTo24(rawValue)
+    if (!parsed) {
+      input.value = formatTime12(fallback)
+      return
+    }
+    updateEvent(dayIndex, eventIndex, field, parsed)
+    input.value = formatTime12(parsed)
+  }
+
 
   const addEvent = (dayIndex: number) => {
     if (!schedule) return
@@ -286,25 +304,31 @@ export default function App() {
                         key={`${day.date}-${eventIndex}`}
                         className="min-w-0 space-y-2 rounded-xl border border-slate-200/80 bg-white/80 p-2 text-[0.7rem]"
                       >
-                        <div className="grid min-w-0 grid-cols-2 gap-2">
-                          <Input
-                            type="time"
-                            className="h-8 w-full min-w-0 px-2 pr-6 text-xs tabular-nums"
-                            value={event.start}
-                            onChange={(e) =>
-                              updateEvent(index, eventIndex, 'start', e.target.value)
-                            }
-                            placeholder="09:00"
-                          />
-                          <Input
-                            type="time"
-                            className="h-8 w-full min-w-0 px-2 pr-6 text-xs tabular-nums"
-                            value={event.end}
-                            onChange={(e) =>
-                              updateEvent(index, eventIndex, 'end', e.target.value)
-                            }
-                            placeholder="10:30"
-                          />
+                        <div className="min-w-0 space-y-2">
+                          {(['start', 'end'] as const).map((field) => (
+                            <div key={field} className="min-w-0">
+                              <p className="text-[0.65rem] uppercase tracking-wide text-slate-400">
+                                {field === 'start' ? 'Start' : 'End'}
+                              </p>
+                              <input
+                                key={`${day.date}-${eventIndex}-${field}-${event[field]}`}
+                                type="text"
+                                className="mt-1 h-8 w-full min-w-0 rounded-md border border-input bg-background px-2 text-xs tabular-nums"
+                                defaultValue={formatTime12(event[field])}
+                                onBlur={(e) =>
+                                  handleTimeBlur(
+                                    index,
+                                    eventIndex,
+                                    field,
+                                    e.target.value,
+                                    event[field],
+                                    e.currentTarget
+                                  )
+                                }
+                                placeholder="4:00 AM"
+                              />
+                            </div>
+                          ))}
                         </div>
                         <Textarea
                           rows={2}
