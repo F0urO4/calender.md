@@ -118,6 +118,11 @@ export default function App() {
     })
   }
 
+  const resizeTextarea = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }
+
   const handleTimeBlur = (
     dayIndex: number,
     eventIndex: number,
@@ -173,6 +178,12 @@ export default function App() {
       setError('Unable to reach the API server.')
     })
   }, [])
+
+  useEffect(() => {
+    document
+      .querySelectorAll<HTMLTextAreaElement>('textarea[data-auto-grow="true"]')
+      .forEach(resizeTextarea)
+  }, [schedule])
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -340,12 +351,14 @@ export default function App() {
                           placeholder="Event title"
                         />
                         <Textarea
-                          rows={2}
-                          className="min-h-8 resize-none break-words text-[0.7rem] leading-tight [overflow-wrap:anywhere]"
+                          rows={1}
+                          data-auto-grow="true"
+                          className="min-h-8 resize-none whitespace-pre-wrap break-words text-[0.7rem] leading-tight [overflow-wrap:anywhere]"
                           value={event.note ?? ''}
                           onChange={(e) =>
                             updateEvent(index, eventIndex, 'note', e.target.value)
                           }
+                          onInput={(e) => resizeTextarea(e.currentTarget)}
                           placeholder="Optional note"
                         />
                         <Button
