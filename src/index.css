@@ -23,6 +23,158 @@ body {
   height: calc(100vh / 0.9);
 }
 
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: Letter landscape;
+    margin: 0.25in;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .theme {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    min-height: auto !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .screen-root {
+    display: none !important;
+  }
+
+  .print-root {
+    display: block;
+    width: 100%;
+    margin: 0;
+  }
+
+  .fit-screen {
+    transform: none !important;
+    height: auto !important;
+  }
+
+  .print-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: #0f172a;
+    width: 100%;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.25rem;
+  }
+
+  .print-label {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.55rem;
+    color: #64748b;
+  }
+
+  .print-title {
+    font-size: 0.95rem;
+    margin: 0.1rem 0 0;
+  }
+
+  .print-week {
+    font-size: 0.7rem;
+    color: #475569;
+  }
+
+  .print-days {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+    align-content: start;
+  }
+
+  .print-day {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.35rem;
+    padding: 0.25rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    break-inside: avoid;
+  }
+
+  .print-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .print-day-date {
+    font-size: 0.55rem;
+    color: #64748b;
+  }
+
+  .print-empty {
+    font-size: 0.55rem;
+    color: #94a3b8;
+  }
+
+  .print-event {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.3rem;
+    padding: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    break-inside: avoid;
+  }
+
+  .print-time {
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .print-title-text {
+    font-size: 0.6rem;
+    font-weight: 500;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .print-note {
+    font-size: 0.55rem;
+    color: #475569;
+    line-height: 1.2;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
 @layer base {
   .theme {
     --font-heading: var(--font-sans);

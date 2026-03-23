@@ -140,6 +140,10 @@ export default function App() {
     input.value = formatTime12(parsed)
   }
 
+  const handleExportPdf = () => {
+    window.print()
+  }
+
 
   const addEvent = (dayIndex: number) => {
     if (!schedule) return
@@ -196,18 +200,19 @@ export default function App() {
             compactView && 'fit-screen'
           )}
         >
-          <header className="flex flex-col gap-1">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              Calendar MD
-            </p>
-            <h1 className="text-lg font-semibold tracking-tight text-slate-900">
-              Weekly schedule from Markdown
-            </h1>
-          </header>
+          <div className="screen-root no-print">
+            <header className="flex flex-col gap-1">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Calendar MD
+              </p>
+              <h1 className="text-lg font-semibold tracking-tight text-slate-900">
+                Weekly schedule from Markdown
+              </h1>
+            </header>
 
-          <main className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
-            <Card className="border-slate-200/70 bg-white/80 shadow-sm backdrop-blur">
-              <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+            <main className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
+              <Card className="border-slate-200/70 bg-white/80 shadow-sm backdrop-blur">
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3">
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
                     Selected week
@@ -267,6 +272,9 @@ export default function App() {
                   >
                     {compactView ? 'Normal' : 'Compact'}
                   </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportPdf}>
+                    Export PDF
+                  </Button>
                   <Button
                     size="sm"
                     onClick={handleSave}
@@ -290,103 +298,139 @@ export default function App() {
                   {error || message || 'Loading week data...'}
                 </div>
               )}
-            </Card>
+              </Card>
 
-            <section className="grid min-h-0 flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">
-              {days.map((day, index) => (
-                <Card
-                  key={`${day.date}-${index}`}
-                  className="flex min-h-0 min-w-0 flex-col border-slate-200/70 bg-white/70 p-2"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <h2 className="text-xs font-semibold text-slate-900">
-                      {dayLabels[index]}
-                    </h2>
-                    <span className="text-[0.65rem] text-slate-500">{day.date}</span>
-                  </div>
-                  <div className="mt-2 flex-1 min-w-0 space-y-2">
+              <section className="grid min-h-0 flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">
+                {days.map((day, index) => (
+                  <Card
+                    key={`${day.date}-${index}`}
+                    className="day-card flex min-h-0 min-w-0 flex-col border-slate-200/70 bg-white/70 p-2"
+                  >
+                    <div className="flex items-baseline justify-between">
+                      <h2 className="text-xs font-semibold text-slate-900">
+                        {dayLabels[index]}
+                      </h2>
+                      <span className="text-[0.65rem] text-slate-500">{day.date}</span>
+                    </div>
+                    <div className="mt-2 flex-1 min-w-0 space-y-2">
+                      {day.events.length === 0 && (
+                        <div className="rounded-xl border border-dashed border-slate-200 px-3 py-2 text-[0.7rem] text-slate-500">
+                          No events yet
+                        </div>
+                      )}
+                      {day.events.map((event, eventIndex) => (
+                        <div
+                          key={`${day.date}-${eventIndex}`}
+                          className="event-card min-w-0 space-y-2 rounded-xl border border-slate-200/80 bg-white/80 p-2 text-[0.7rem]"
+                        >
+                          <div className="min-w-0 space-y-2">
+                            {(['start', 'end'] as const).map((field) => (
+                              <div key={field} className="min-w-0">
+                                <p className="text-[0.65rem] uppercase tracking-wide text-slate-400">
+                                  {field === 'start' ? 'Start' : 'End'}
+                                </p>
+                                <input
+                                  key={`${day.date}-${eventIndex}-${field}-${event[field]}`}
+                                  type="text"
+                                  className="mt-1 h-8 w-full min-w-0 rounded-md border border-input bg-background px-2 text-xs tabular-nums"
+                                  defaultValue={formatTime12(event[field])}
+                                  onBlur={(e) =>
+                                    handleTimeBlur(
+                                      index,
+                                      eventIndex,
+                                      field,
+                                      e.target.value,
+                                      event[field],
+                                      e.currentTarget
+                                    )
+                                  }
+                                  placeholder="4:00 AM"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          <Textarea
+                            rows={2}
+                            className="min-h-8 resize-none break-words text-[0.7rem] leading-tight [overflow-wrap:anywhere]"
+                            value={event.title}
+                            onChange={(e) =>
+                              updateEvent(index, eventIndex, 'title', e.target.value)
+                            }
+                            placeholder="Event title"
+                          />
+                          <Textarea
+                            rows={2}
+                            data-auto-grow="true"
+                            className="min-h-16 resize-none whitespace-pre-wrap break-words text-[0.7rem] leading-tight [overflow-wrap:anywhere] bg-white/90 border-slate-300/70"
+                            value={event.note ?? ''}
+                            onChange={(e) =>
+                              updateEvent(index, eventIndex, 'note', e.target.value)
+                            }
+                            onInput={(e) => resizeTextarea(e.currentTarget)}
+                            placeholder="Optional note"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-full justify-center text-[0.7rem] text-rose-600 hover:text-rose-700"
+                            onClick={() => removeEvent(index, eventIndex)}
+                          >
+                            <Trash2 className="mr-2 size-3" />
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 h-7 text-[0.7rem]"
+                      onClick={() => addEvent(index)}
+                      disabled={!schedule}
+                    >
+                      <Plus className="mr-2 size-3" />
+                      Add event
+                    </Button>
+                  </Card>
+                ))}
+              </section>
+            </main>
+          </div>
+          <section className="print-only print-root">
+            <div className="print-grid">
+              <div className="print-header">
+                <div>
+                  <p className="print-label">Calendar MD</p>
+                  <h2 className="print-title">Weekly schedule</h2>
+                </div>
+                <div className="print-week">Week {selectedWeek || 'Unloaded'}</div>
+              </div>
+              <div className="print-days">
+                {days.map((day, index) => (
+                  <div key={`${day.date}-${index}-print`} className="print-day">
+                    <div className="print-day-header">
+                      <span className="print-day-name">{dayLabels[index]}</span>
+                      <span className="print-day-date">{day.date}</span>
+                    </div>
                     {day.events.length === 0 && (
-                      <div className="rounded-xl border border-dashed border-slate-200 px-3 py-2 text-[0.7rem] text-slate-500">
-                        No events yet
-                      </div>
+                      <div className="print-empty">No events</div>
                     )}
                     {day.events.map((event, eventIndex) => (
-                      <div
-                        key={`${day.date}-${eventIndex}`}
-                        className="min-w-0 space-y-2 rounded-xl border border-slate-200/80 bg-white/80 p-2 text-[0.7rem]"
-                      >
-                        <div className="min-w-0 space-y-2">
-                          {(['start', 'end'] as const).map((field) => (
-                            <div key={field} className="min-w-0">
-                              <p className="text-[0.65rem] uppercase tracking-wide text-slate-400">
-                                {field === 'start' ? 'Start' : 'End'}
-                              </p>
-                              <input
-                                key={`${day.date}-${eventIndex}-${field}-${event[field]}`}
-                                type="text"
-                                className="mt-1 h-8 w-full min-w-0 rounded-md border border-input bg-background px-2 text-xs tabular-nums"
-                                defaultValue={formatTime12(event[field])}
-                                onBlur={(e) =>
-                                  handleTimeBlur(
-                                    index,
-                                    eventIndex,
-                                    field,
-                                    e.target.value,
-                                    event[field],
-                                    e.currentTarget
-                                  )
-                                }
-                                placeholder="4:00 AM"
-                              />
-                            </div>
-                          ))}
+                      <div key={`${day.date}-${eventIndex}-print`} className="print-event">
+                        <div className="print-time">
+                          {formatTime12(event.start)} — {formatTime12(event.end)}
                         </div>
-                        <Textarea
-                          rows={2}
-                          className="min-h-8 resize-none break-words text-[0.7rem] leading-tight [overflow-wrap:anywhere]"
-                          value={event.title}
-                          onChange={(e) =>
-                            updateEvent(index, eventIndex, 'title', e.target.value)
-                          }
-                          placeholder="Event title"
-                        />
-                        <Textarea
-                          rows={1}
-                          data-auto-grow="true"
-                          className="min-h-8 resize-none whitespace-pre-wrap break-words text-[0.7rem] leading-tight [overflow-wrap:anywhere]"
-                          value={event.note ?? ''}
-                          onChange={(e) =>
-                            updateEvent(index, eventIndex, 'note', e.target.value)
-                          }
-                          onInput={(e) => resizeTextarea(e.currentTarget)}
-                          placeholder="Optional note"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-full justify-center text-[0.7rem] text-rose-600 hover:text-rose-700"
-                          onClick={() => removeEvent(index, eventIndex)}
-                        >
-                          <Trash2 className="mr-2 size-3" />
-                          Remove
-                        </Button>
+                        <div className="print-title-text">{event.title}</div>
+                        {event.note && (
+                          <div className="print-note">{event.note}</div>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 h-7 text-[0.7rem]"
-                    onClick={() => addEvent(index)}
-                    disabled={!schedule}
-                  >
-                    <Plus className="mr-2 size-3" />
-                    Add event
-                  </Button>
-                </Card>
-              ))}
-            </section>
-          </main>
+                ))}
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </TooltipProvider>
